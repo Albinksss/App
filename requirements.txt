@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+matplotlib.pyplot
+streamlit
+requests
+pandas
+pydeck
+python-multipart
