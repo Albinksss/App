@@ -7,7 +7,7 @@ import matplotlib.cm as cm
 
 # Configuration API
 #API_BASE = "http://127.0.0.1:8000/"
-API_BASE = "https://backend-xowl.onrender.com"
+API_BASE = "https://backend-xowl.onrender.com/"
 UPLOAD_ENDPOINT = f"{API_BASE}upload/"
 PROCESS_ENDPOINT = f"{API_BASE}process/"
 
