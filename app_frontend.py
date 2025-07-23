@@ -12,20 +12,20 @@ UPLOAD_ENDPOINT = f"{API_BASE}upload/"
 PROCESS_ENDPOINT = f"{API_BASE}process/"
 
 st.title("Optimisation logistique")
-st.markdown("Chargez deux fichiers Excel : un avec vos données principales et un avec la BDD NUTS/postaux.")
+st.markdown("Chargez deux fichiers CSV : un avec vos données principales et un avec la BDD NUTS/postaux.")
 
 # -------------------------------
 # 🔁 Fonction générique de chargement
 # -------------------------------
 def charger_fichier(label, uploader_key, session_key_id, session_key_df):
-    uploaded_file = st.file_uploader(label, type=["xlsx"], key=uploader_key)
+    uploaded_file = st.file_uploader(label, type=["csv"], key=uploader_key)
     
     if uploaded_file and session_key_id not in st.session_state:
         with st.spinner(f"Envoi de {label}..."):
             response = requests.post(UPLOAD_ENDPOINT, files={"file": uploaded_file})
             if response.status_code == 200:
                 st.session_state[session_key_id] = response.json()["file_id"]
-                st.session_state[session_key_df] = pd.read_excel(uploaded_file)
+                st.session_state[session_key_df] = pd.read_csv(uploaded_file)
                 st.success("✅ Fichier envoyé avec succès !")
             else:
                 st.error("❌ Échec de l'envoi.")
