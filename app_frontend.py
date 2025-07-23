@@ -6,44 +6,36 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 # Configuration API
-#API_BASE = "http://127.0.0.1:8000/"
+# API_BASE = "https://127.0.0.1:8000/"
 API_BASE = "https://backend-xowl.onrender.com/"
 UPLOAD_ENDPOINT = f"{API_BASE}upload/"
 PROCESS_ENDPOINT = f"{API_BASE}process/"
 
 st.title("Optimisation logistique")
-st.markdown("Chargez deux fichiers CSV : un avec vos données principales et un avec la BDD NUTS/postaux.")
+st.markdown("📁 **Chargez vos deux fichiers Excel** (principal + BDD).")
 
-# -------------------------------
-# 🔁 Fonction générique de chargement
-# -------------------------------
-def charger_fichier(label, uploader_key, session_key_id, session_key_df):
-    uploaded_file = st.file_uploader(label, type=["csv"], key=uploader_key)
-    
+# 🔁 Fonction de chargement générique
+def charger_fichier_excel(label, uploader_key, session_key_id, session_key_df):
+    uploaded_file = st.file_uploader(label, type=["xlsx"], key=uploader_key)
     if uploaded_file and session_key_id not in st.session_state:
         with st.spinner(f"Envoi de {label}..."):
             response = requests.post(UPLOAD_ENDPOINT, files={"file": uploaded_file})
             if response.status_code == 200:
                 st.session_state[session_key_id] = response.json()["file_id"]
-                st.session_state[session_key_df] = pd.read_csv(uploaded_file, sep = ";")
+                st.session_state[session_key_df] = pd.read_excel(uploaded_file)
                 st.success("✅ Fichier envoyé avec succès !")
             else:
                 st.error("❌ Échec de l'envoi.")
-    
     return uploaded_file
 
-# -------------------------------
-# 📂 Chargement des fichiers
-# -------------------------------
-charger_fichier("📂 Fichier principal (commandes)", "main_file_uploader", "file_id", "df_uploaded")
-charger_fichier("📂 Fichier BDD NUTS", "bdd_file_uploader", "file_id2", "bdd_df")
+# 📂 Chargement des deux fichiers Excel
+charger_fichier_excel("📄 Fichier principal (commandes)", "main_file_uploader", "file_id", "df_uploaded")
+charger_fichier_excel("📄 Fichier BDD NUTS", "bdd_file_uploader", "file_id2", "bdd_df")
 
-# ------------------------------- 
-# 📊 Paramètres si fichiers OK
-# -------------------------------
+# ✔️ Si les deux fichiers sont chargés
 if "df_uploaded" in st.session_state and "bdd_df" in st.session_state:
     df = st.session_state["df_uploaded"]
-    st.subheader("Aperçu des données")
+    st.subheader("Aperçu des données principales")
     st.dataframe(df.head())
 
     colonnes = df.columns.tolist()
@@ -73,9 +65,7 @@ if "df_uploaded" in st.session_state and "bdd_df" in st.session_state:
         if sum(filter(None, [poids1, poids2, poids3])) != 100:
             st.warning("⚠️ La somme des poids doit être égale à 100%.")
 
-    # -------------------------------
-    # 🚀 Lancer l'optimisation
-    # -------------------------------
+    # 🚀 Lancer l’optimisation
     if st.button("🚀 Lancer l’optimisation") and optimization != "Aucune":
         with st.spinner("Traitement en cours..."):
             params = {
@@ -88,7 +78,7 @@ if "df_uploaded" in st.session_state and "bdd_df" in st.session_state:
                 "Col_Code_postal": Col_Code_postal,
             }
 
-            # Ajouter pondération si activée
+            # Pondération
             params.update({k: v for k, v in {
                 "param1": param1,
                 "param2": param2,
@@ -109,15 +99,13 @@ if "df_uploaded" in st.session_state and "bdd_df" in st.session_state:
         else:
             st.error(f"❌ Erreur API : {response.status_code}")
 
-# -------------------------------
-# 📥 Résultats + carte
-# -------------------------------
+# 📈 Affichage des résultats
 if "df_result" in st.session_state and "df_affectation" in st.session_state:
     df_result = st.session_state.df_result
     df_affectation = st.session_state.df_affectation
 
-    st.download_button("📥 Télécharger entrepôts", df_result.to_csv(index=False), "entrepots.csv", "text/csv")
-    st.download_button("📥 Télécharger affectations", df_affectation.to_csv(index=False), "affectation.csv", "text/csv")
+    st.download_button("📥 Télécharger entrepôts", df_result.to_csv(index=False), "entrepots.csv")
+    st.download_button("📥 Télécharger affectations", df_affectation.to_csv(index=False), "affectation.csv")
 
     if "x" in df_result.columns and "y" in df_result.columns:
         lon_center = df_result["x"].mean()
@@ -138,9 +126,7 @@ if "df_result" in st.session_state and "df_affectation" in st.session_state:
         view_state = pdk.ViewState(latitude=lat_center, longitude=lon_center, zoom=4)
         st.pydeck_chart(pdk.Deck(layers=layers, initial_view_state=view_state))
 
-# -------------------------------
 # 🔄 Réinitialisation
-# -------------------------------
 if st.button("🔁 Réinitialiser tout"):
     for key in ["file_id", "df_uploaded", "file_id2", "bdd_df", "df_result", "df_affectation"]:
         st.session_state.pop(key, None)
