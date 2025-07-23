@@ -25,7 +25,7 @@ def charger_fichier(label, uploader_key, session_key_id, session_key_df):
             response = requests.post(UPLOAD_ENDPOINT, files={"file": uploaded_file})
             if response.status_code == 200:
                 st.session_state[session_key_id] = response.json()["file_id"]
-                st.session_state[session_key_df] = pd.read_csv(uploaded_file)
+                st.session_state[session_key_df] = pd.read_csv(uploaded_file, sep = ";")
                 st.success("✅ Fichier envoyé avec succès !")
             else:
                 st.error("❌ Échec de l'envoi.")
